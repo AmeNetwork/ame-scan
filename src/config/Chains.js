@@ -1,21 +1,21 @@
 const Chains = new Map([
-  [
-    "0x7a69",
-    {
-      Network: {
-        chainId: "0x7a69",
-        chainName: "Localhost",
-        rpcUrls: ["http://127.0.0.1:7545"],
-        nativeCurrency: {
-          name: "ETH",
-          symbol: "ETH",
-          decimals: 18,
-        },
-        blockExplorerUrls: ["http://127.0.0.1:7545"],
-      },
-      ameWorld: "0xeD1DB453C3156Ff3155a97AD217b3087D5Dc5f6E",
-    },
-  ],
+  // [
+  //   "0x7a69",
+  //   {
+  //     Network: {
+  //       chainId: "0x7a69",
+  //       chainName: "Localhost",
+  //       rpcUrls: ["http://127.0.0.1:7545"],
+  //       nativeCurrency: {
+  //         name: "ETH",
+  //         symbol: "ETH",
+  //         decimals: 18,
+  //       },
+  //       blockExplorerUrls: ["http://127.0.0.1:7545"],
+  //     },
+  //     ameWorld: "0xeD1DB453C3156Ff3155a97AD217b3087D5Dc5f6E",
+  //   },
+  // ],
   [
     "0xaa37dc",
     {
