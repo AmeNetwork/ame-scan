@@ -1,0 +1,339 @@
+.ScanContainer{
+    width: 96%;
+    max-width: 800px;
+    margin: 0px auto;
+}
+.ScanHeader{
+    margin-top: 100px;
+    margin-bottom: 100px;
+}
+.ScanTitle {
+    width: 100%;
+    font-weight: bold;
+    text-align: center;
+    font-size: 32px;
+    color: #fff;
+}
+.ScanHeaderMenu{
+    justify-content: center;
+    align-content: center;
+    display: flex;
+    color: #fff;
+    padding: 20px 0px;
+   
+}
+.ScanHeaderMenu li{
+    cursor: pointer;
+    text-decoration: underline;
+    padding: 0px 10px;
+}
+.ScanHeaderMenu li:hover,.ScanHeaderMenu a:hover{
+    color: #04DD8F;
+}
+.ScanHeaderMenu a{
+    text-decoration: none;
+    color: #fff;
+}
+.NetworkLabel{
+    font-weight: bold;
+    font-size: 18px;
+    color: #fff;
+}
+.Wallet{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 20px;
+}
+.WalletLabel{
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+}
+.WalletInfo{
+    display: flex;
+    flex-direction: column;
+    align-items:end;
+}
+.ComponentAddressButton{
+    cursor: pointer;
+    width: 80px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    border-radius: 4px;
+    color: #fff;
+    background: #0d1116;
+    border: 2px solid #363b42;
+}
+.Network{
+    align-items: center;
+    justify-content: space-between;
+    display: flex;
+}
+
+.AmeQuery {
+
+    display: flex;
+    align-items: center;
+    margin: 0px auto;
+    justify-content: space-between;
+    border-radius: 4px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+.AmeInput {
+    font-family: "SFMonoRegular";
+    padding-left: 4px;
+    font-size: 16px;
+    border: 2px solid #363b42;
+    border-radius: 4px;
+    width: 54%;
+    height: 36px;
+    margin-left: 4px;
+    margin-right: 4px;
+    background: #000;
+    color: #fff;
+  }
+.NetworkSelect {
+    width: 200px;
+}
+
+.SearchButton {
+    cursor: pointer;
+    height: 40px;
+    line-height: 40px;
+    width: 120px;
+    background: #0d1116;
+    border: 2px solid #363b42;
+    text-align: center;
+    color: #fff;
+    border-radius: 4px;
+}
+
+.ComponentsTitle {
+    color: #fff;
+    font-weight: bold;
+    font-size: 18px;
+    width: 100%;
+    margin: 0px auto;
+    margin-top: 20px;
+}
+
+.Components {
+    width: 100%;
+    margin: 0px auto;
+}
+
+.ComponentAddress {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0px;
+    font-size: 16px;
+}
+
+.Components li {
+    margin-bottom: 20px;
+}
+
+.WalletComponent{
+    color: #fff;
+}
+
+
+.item {
+    cursor: pointer;
+    /* padding: 20px; */
+    border: 1px solid #000;
+}
+
+.itemBtn {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    margin: 0;
+    text-align: left;
+    background-color: transparent;
+    border: none;
+    padding: 20px;
+}
+
+.itemBtn:hover {
+    background-color: #f3f3f3;
+}
+
+.itemBtnExpanded {
+    background-color: #e7e7e7;
+}
+
+.itemContent {
+    transition: height 0.25s cubic-bezier(0, 0, 0, 1);
+}
+
+.itemPanel {
+    /* padding: 1rem; */
+    padding: 20px;
+    padding-top: 0px;
+}
+
+.chevron {
+    margin-left: auto;
+    transition: transform 0.25s cubic-bezier(0, 0, 0, 1);
+}
+.ComponentAddressTitle{
+    color: #fff;
+}
+.itemBtnExpanded .chevron {
+    transform: rotate(180deg);
+}
+.TabContainer{
+    border-radius: 4px;
+    padding: 10px;
+
+    border:2px solid #363b42;
+    margin-top: 20px;
+}
+.TabItem{
+    border:2px solid #363b42;
+        background: #0d1116;
+    border-radius: 4px;
+    margin-top: 10px;
+    padding: 10px;
+    /* border-bottom: 0px; */
+
+}
+.TabHeader{
+    cursor: pointer;
+    align-items: center;
+    justify-content: space-between;
+    display: flex;
+    /* padding: 20px 20px; */
+    /* border-top: 2px solid #000; */
+
+}
+.TabHeaderComponentMethod{
+    display: flex;
+    align-items: center;
+}
+.AccordionTitle{
+    color: #fff;
+    margin-top: 20px;
+}
+.ComponentMethodType{
+    color: #fff;
+    background: #363b42;
+    width: 80px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    border-radius: 4px;
+    font-size: 14px;
+}
+.ComponentMethodName{
+    color: #fff;
+    font-size: 16px;
+    margin-left: 10px;
+    font-weight: bold;
+}
+.RequestParams{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.RequestParamsInput{
+    background: #000;
+    width: 400px;
+    height: 36px;
+    display: block;
+    margin:10px 0px;
+    border: 2px solid #363b42;
+    border-radius: 4px;
+    color: #fff;
+}
+
+.RequestParamsButton{
+    cursor: pointer;
+    width: 80px;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    border-radius: 4px;
+    background: #21262D;
+    color: #C8D1D9;
+    border: 2px solid #30363D;
+}
+.Response{
+    color: #fff;
+}
+.ResponseDataTypeColor{
+    color: #04DD8F;
+}
+.rotate {
+    transform: rotate(180deg);
+}
+.RegisterButton{
+    cursor: pointer;
+    width: 120px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    border-radius: 4px;
+    background: #0d1116;
+    border: 2px solid #363b42;
+    color: #fff; 
+}
+.NoComponentData{
+    width: 100%;
+    text-align: center;
+    margin-top: 30px;
+    font-size: 16px;
+    color: #fff;
+}
+.Select{
+    height: 44px;
+    width: 200px;
+}
+.tutorial{
+
+    height: 100vh;
+    overflow-y: scroll;
+    background: #000;
+    border-left: 1px solid #3D3D3D;
+}
+@media only screen and (max-width: 576px) {
+    .ScanTitle{
+        font-size: 20px;
+    }
+    .ComponentAddressTitle{
+        font-size: 14px;
+    }
+    .AmeQuery{
+        align-items: start;
+        width: 100%;
+        flex-direction: column;
+    }
+    .AmeInput{
+        width:calc(100% - 8px);
+        margin-left:0px;
+        margin-right: 0px;
+    }
+    .SearchButton{
+        width:calc(100% - 4px);
+        margin-top: 20px;
+    }
+    .ComponentAddressTitle{
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .RequestParamsLeft{
+        width: 100%;
+    }
+    .RequestParams{
+        flex-direction: column;
+    }   
+    .RequestParamsInput{
+        width: calc(100% - 8   px);
+    }
+}

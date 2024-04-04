@@ -1,0 +1,23 @@
+.TutorialHeader{
+    color: #fff;
+    width: 96%;
+    font-size: 20px;
+    padding: 20px 0px;
+    border-bottom: 1px solid #363b42;
+    margin: 0px auto;
+    margin-bottom: 20px;
+}
+.TutorialBody{
+    width: 96%;
+    margin: 0px auto;
+}
+.TutorialTit{
+    color: #fff;
+    padding: 10px 0px;
+}
+.TutorialImage{
+    width: 70%;
+    border: 1px solid #fff;
+    text-align: left;
+    margin: 10px 0px 10px;
+}
