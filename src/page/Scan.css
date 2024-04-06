@@ -302,6 +302,7 @@
     background: #000;
     border-left: 1px solid #3D3D3D;
 }
+
 @media only screen and (max-width: 576px) {
     .ScanTitle{
         font-size: 20px;
@@ -335,5 +336,12 @@
     }   
     .RequestParamsInput{
         width: calc(100% - 8   px);
+    }
+    .ScanHeaderMenu{
+        align-items: center;
+        flex-direction: column;
+    }
+    .ScanHeaderMenu li{
+        margin-top: 20px;
     }
 }

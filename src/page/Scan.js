@@ -445,6 +445,11 @@ function Scan() {
               About Ame Network
             </a>
           </li>
+          <li>
+            <a href="https://github.com/HelloRickey/ame/tree/main/contracts/Components" target="_blank">
+              Components
+            </a>
+          </li>
           {/* <li onClick={toggleDrawer}>How to Use It</li> */}
         </ul>
       </div>
@@ -528,6 +533,7 @@ function Scan() {
             <img src={ScanIcon} width={60} />
           </div>
           <div>No Data</div>
+        
         </div>
       ) : (
         <ul className="Components">
