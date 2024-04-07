@@ -344,6 +344,31 @@ function Scan() {
                   reqParamsEncode,
                   currentAddress
                 );
+             
+
+                if(methodResponseDataType.length!=0){
+                
+            
+                  var resDataDecode = ame.decodeResponseData(
+                    methodResponseDataType,
+                    txResult.events.Response.returnValues[0]
+                  );
+
+                  const resData = Object.values(resDataDecode);
+                  resData.pop();
+
+                  setInputsData((inputsData) => {
+                    var newInputsData = [...inputsData];
+                    newInputsData[_componentIndex][_methodIndex][1] = resData;
+                    return newInputsData;
+                  });
+                 
+
+
+                }
+
+             
+                
               },
               {
                 pending: {
@@ -366,6 +391,7 @@ function Scan() {
               }
             );
           } else {
+            
             const response = await toast.promise(
               async () => {
                 var txResult = await ame.sendPutRequestWeb3js(
@@ -374,6 +400,30 @@ function Scan() {
                   reqParamsEncode,
                   currentAddress
                 );
+
+                if(methodResponseDataType.length!=0){
+                
+            
+                  var resDataDecode = ame.decodeResponseData(
+                    methodResponseDataType,
+                    txResult.events.Response.returnValues[0]
+                  );
+
+        
+
+                  const resData = Object.values(resDataDecode);
+                  resData.pop();
+
+                  setInputsData((inputsData) => {
+                    var newInputsData = [...inputsData];
+                    newInputsData[_componentIndex][_methodIndex][1] = resData;
+                    return newInputsData;
+                  });
+                 
+
+
+                }
+
               },
               {
                 pending: {
