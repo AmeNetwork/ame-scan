@@ -163,8 +163,17 @@ function Scan() {
     _inputIndex
   ) => {
     var newInputsData = [...inputsData];
-    newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
+
+    if( components[_componentIndex].methods[_methodIndex].dataType[0][_inputIndex].includes("[]") ){
+      newInputsData[_componentIndex][_methodIndex][0][_inputIndex]= e.target.value.split(",")
+    }else{
+      newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
       e.target.value;
+    }
+    
+
+
+
 
     setInputsData(newInputsData);
   };
@@ -296,6 +305,7 @@ function Scan() {
     var methodResponseDataType =
       components[_componentIndex].methods[_methodIndex].dataType[1];
     var requestInputData = inputsData[_componentIndex][_methodIndex][0];
+
 
     console.log("methodRequestParamsType", methodRequestParamsType);
     console.log("requestInputData", requestInputData);

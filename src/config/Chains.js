@@ -13,7 +13,7 @@ const Chains = new Map([
   //       },
   //       blockExplorerUrls: ["http://127.0.0.1:7545"],
   //     },
-  //     ameWorld: "0xeD1DB453C3156Ff3155a97AD217b3087D5Dc5f6E",
+  //     ameWorld: "0xA15BB66138824a1c7167f5E85b957d04Dd34E468",
   //   },
   // ],
   [
