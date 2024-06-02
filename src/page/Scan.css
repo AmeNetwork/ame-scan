@@ -267,6 +267,10 @@
 .Response{
     color: #fff;
 }
+.ResponseValue{
+    overflow-wrap: break-word;
+    width: 100%;
+}
 .ResponseDataTypeColor{
     color: #04DD8F;
 }

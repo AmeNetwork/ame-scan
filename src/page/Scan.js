@@ -704,11 +704,11 @@ function Scan() {
                     <div className="Response">
                       {inputsData[componentIndex][methodIndex][1].map(
                         (resItem, resIndex) => (
-                          <div key={resIndex}>
-                            {resItem.toString()}
-                            <span className="ResponseDataTypeColor">
+                          <div key={resIndex} className="ResponseValue">
+                            <div>{resItem.toString()}</div>
+                            <div className="ResponseDataTypeColor">
                               :{methodItem.dataType[1][resIndex]}
-                            </span>
+                            </div>
                           </div>
                         )
                       )}
