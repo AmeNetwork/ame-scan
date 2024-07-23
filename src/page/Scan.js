@@ -18,6 +18,7 @@ function Scan() {
   const [searchAddress, setSearchAddress] = useState("");
   const [components, setComponents] = useState([]);
   const [inputsData, setInputsData] = useState([]);
+  const [valuesData, setValuesData] = useState([]);
   const [currentAddress, setCurrentAddress] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
   const [buttonType, setButtonType] = useState(0); //0:none,1:add,2:delete
@@ -101,6 +102,15 @@ function Scan() {
     }
     setInputsData(inputs);
   };
+
+  const sortValues=(componentsData)=>{
+    var values = [];
+    for (var i = 0; i < componentsData.length; i++) {
+      values.push(new Array(componentsData[i].methods.length).fill(""))
+    }
+    setValuesData(values);
+  }
+
   const queryContract = async () => {
     try {
       var code = await ame.web3.eth.getCode(searchAddress);
@@ -109,6 +119,7 @@ function Scan() {
         var componentsData = await ame.queryAccount(searchAddress);
         setComponents(componentsData);
         sortInputs(componentsData);
+        sortValues(componentsData)
         console.log("componentsData", componentsData);
         if (currentAddress != "") {
           if (searchAddress == currentAddress) {
@@ -124,6 +135,7 @@ function Scan() {
         console.log("componentsData", componentsData);
         setComponents([componentsData]);
         sortInputs([componentsData]);
+        sortValues([componentsData])
         //Does the user has components?
         if (currentAddress != "") {
           var hasComponent = await ame.hasComponent(
@@ -164,18 +176,25 @@ function Scan() {
   ) => {
     var newInputsData = [...inputsData];
 
-    if( components[_componentIndex].methods[_methodIndex].dataType[0][_inputIndex].includes("[]") ){
-      newInputsData[_componentIndex][_methodIndex][0][_inputIndex]= e.target.value.split(",")
-    }else{
+    if (
+      components[_componentIndex].methods[_methodIndex].dataType[0][
+        _inputIndex
+      ].includes("[]")
+    ) {
       newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
-      e.target.value;
+        e.target.value.split(",");
+    } else {
+      newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
+        e.target.value;
     }
-    
-
-
-
 
     setInputsData(newInputsData);
+  };
+
+  const changeValue = async (e, _componentIndex, _methodIndex) => {
+    var newValuesData = [...valuesData];
+    newValuesData[_componentIndex][_methodIndex]=e.target.value
+    setValuesData(newValuesData)
   };
 
   const openTab = (_componentIndex, _methodIndex) => {
@@ -306,7 +325,6 @@ function Scan() {
       components[_componentIndex].methods[_methodIndex].dataType[1];
     var requestInputData = inputsData[_componentIndex][_methodIndex][0];
 
-
     console.log("methodRequestParamsType", methodRequestParamsType);
     console.log("requestInputData", requestInputData);
 
@@ -345,6 +363,15 @@ function Scan() {
         });
       } else {
         if (currentAddress != "") {
+
+          var value=valuesData[_componentIndex][_methodIndex];
+          if(value!=""){
+            value=ame.web3.utils.toWei(value, 'ether');
+          }else{
+            value=0;
+          }
+
+ 
           if (methodType == 1) {
             const response = await toast.promise(
               async () => {
@@ -352,13 +379,14 @@ function Scan() {
                   componentAddress,
                   methodName,
                   reqParamsEncode,
-                  currentAddress
+                  currentAddress,
+                  value
                 );
-             
 
-                if(methodResponseDataType.length!=0){
-                
-            
+                if (
+                  methodResponseDataType.length != 0 &&
+                  txResult.events != undefined
+                ) {
                   var resDataDecode = ame.decodeResponseData(
                     methodResponseDataType,
                     txResult.events.Response.returnValues[0]
@@ -372,13 +400,7 @@ function Scan() {
                     newInputsData[_componentIndex][_methodIndex][1] = resData;
                     return newInputsData;
                   });
-                 
-
-
                 }
-
-             
-                
               },
               {
                 pending: {
@@ -401,25 +423,21 @@ function Scan() {
               }
             );
           } else {
-            
             const response = await toast.promise(
               async () => {
                 var txResult = await ame.sendPutRequestWeb3js(
                   componentAddress,
                   methodName,
                   reqParamsEncode,
-                  currentAddress
+                  currentAddress,
+                  value
                 );
 
-                if(methodResponseDataType.length!=0){
-                
-            
+                if (methodResponseDataType.length != 0) {
                   var resDataDecode = ame.decodeResponseData(
                     methodResponseDataType,
                     txResult.events.Response.returnValues[0]
                   );
-
-        
 
                   const resData = Object.values(resDataDecode);
                   resData.pop();
@@ -429,11 +447,7 @@ function Scan() {
                     newInputsData[_componentIndex][_methodIndex][1] = resData;
                     return newInputsData;
                   });
-                 
-
-
                 }
-
               },
               {
                 pending: {
@@ -496,7 +510,6 @@ function Scan() {
         </div>
       </Modal> */}
 
-
       <div className="ScanHeader">
         <div className="ScanTitle">Ame Components Scan</div>
         <ul className="ScanHeaderMenu">
@@ -506,7 +519,10 @@ function Scan() {
             </a>
           </li>
           <li>
-            <a href="https://github.com/HelloRickey/ame/tree/main/contracts/Components" target="_blank">
+            <a
+              href="https://github.com/HelloRickey/ame/tree/main/contracts/Components"
+              target="_blank"
+            >
               Components
             </a>
           </li>
@@ -554,6 +570,7 @@ function Scan() {
         <div className="WalletLabel">Wallet</div>
         <div className="WalletInfo">
           <Wallet updateWallet={updateWallet}></Wallet>
+
           {isRegistered ? (
             <div>Registed</div>
           ) : currentAddress != "" ? (
@@ -593,7 +610,6 @@ function Scan() {
             <img src={ScanIcon} width={60} />
           </div>
           <div>No Data</div>
-        
         </div>
       ) : (
         <ul className="Components">
@@ -662,30 +678,53 @@ function Scan() {
                     className="TabBody"
                     hidden={inputsData[componentIndex][methodIndex][2] == false}
                   >
-                    <div className="AccordionTitle">Request Params</div>
                     <div className="RequestParams">
                       <div className="RequestParamsLeft">
-                        {methodItem.dataType[0].map(
-                          (requestItem, inputIndex) => (
+                        <div className="AccordionTitle">Request Params</div>
+                        <div className="RequestParamsForm">
+                          {methodItem.dataType[0].map(
+                            (requestItem, inputIndex) => (
+                              <input
+                                key={inputIndex}
+                                value={
+                                  inputsData[componentIndex][methodIndex][0][
+                                    inputIndex
+                                  ]
+                                }
+                                className="RequestParamsInput"
+                                placeholder={requestItem}
+                                onChange={(e) =>
+                                  changeParamsInput(
+                                    e,
+                                    componentIndex,
+                                    methodIndex,
+                                    inputIndex
+                                  )
+                                }
+                              />
+                            )
+                          )}
+                        </div>
+
+                        {methodItem.methodType == 1 ||
+                        methodItem.methodType == 2 ? (
+                          <div>
+                            <div className="AccordionTitle">Value</div>
                             <input
-                              key={inputIndex}
+                              type="number"
+                              key={methodIndex}
                               value={
-                                inputsData[componentIndex][methodIndex][0][
-                                  inputIndex
-                                ]
+                                valuesData[componentIndex][methodIndex]
                               }
                               className="RequestParamsInput"
-                              placeholder={requestItem}
+                              placeholder="Ether"
                               onChange={(e) =>
-                                changeParamsInput(
-                                  e,
-                                  componentIndex,
-                                  methodIndex,
-                                  inputIndex
-                                )
+                                changeValue(e, componentIndex, methodIndex)
                               }
                             />
-                          )
+                          </div>
+                        ) : (
+                          <div></div>
                         )}
                       </div>
                       <div

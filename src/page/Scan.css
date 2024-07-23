@@ -251,6 +251,7 @@
     border: 2px solid #363b42;
     border-radius: 4px;
     color: #fff;
+    padding-left: 6px;
 }
 
 .RequestParamsButton{
@@ -333,7 +334,7 @@
         text-overflow: ellipsis;
     }
     .RequestParamsLeft{
-        width: 100%;
+        /* width: 100%; */
     }
     .RequestParams{
         flex-direction: column;

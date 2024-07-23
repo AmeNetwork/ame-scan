@@ -2851,10 +2851,10 @@ ajv@^8.0.0, ajv@^8.6.0, ajv@^8.9.0:
     require-from-string "^2.0.2"
     uri-js "^4.2.2"
 
-ame-sdk@^0.0.2:
-  version "0.0.2"
-  resolved "https://registry.yarnpkg.com/ame-sdk/-/ame-sdk-0.0.2.tgz#0320eb5b71999f5326989f88c1c209ae38fa6721"
-  integrity sha512-pJ0vk8tJggeIwLlrRArOBNkjjjCav4P9kYekPYENgnJJoSLAXO8seCNriPjVgZ9JuX0KsE8fX9q1QCO8bGJx/g==
+ame-sdk@^0.0.3:
+  version "0.0.3"
+  resolved "https://registry.yarnpkg.com/ame-sdk/-/ame-sdk-0.0.3.tgz#537fe9eee13763a7945707d1f61e090a8c1c1c1b"
+  integrity sha512-YpfHVsipq7ldZsMmMhYP3EAv4DdJfCkEYx6W5qx5ADrR5s1F3KWLMTeWgChsj8aD/22FVJaFM+YBRLBw/3Tu0A==
   dependencies:
     dotenv "^16.4.5"
     web3 "^4.7.0"
