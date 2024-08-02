@@ -19,6 +19,7 @@ function Scan() {
   const [components, setComponents] = useState([]);
   const [inputsData, setInputsData] = useState([]);
   const [valuesData, setValuesData] = useState([]);
+  const [transactionsData, setTransactionsData] = useState([]);
   const [currentAddress, setCurrentAddress] = useState("");
   const [isRegistered, setIsRegistered] = useState(false);
   const [buttonType, setButtonType] = useState(0); //0:none,1:add,2:delete
@@ -103,13 +104,16 @@ function Scan() {
     setInputsData(inputs);
   };
 
-  const sortValues=(componentsData)=>{
+  const sortValuesAndTransactions = (componentsData) => {
     var values = [];
+    var transactions = [];
     for (var i = 0; i < componentsData.length; i++) {
-      values.push(new Array(componentsData[i].methods.length).fill(""))
+      values.push(new Array(componentsData[i].methods.length).fill(""));
+      transactions.push(new Array(componentsData[i].methods.length).fill(""));
     }
     setValuesData(values);
-  }
+    setTransactionsData(transactions);
+  };
 
   const queryContract = async () => {
     try {
@@ -119,7 +123,7 @@ function Scan() {
         var componentsData = await ame.queryAccount(searchAddress);
         setComponents(componentsData);
         sortInputs(componentsData);
-        sortValues(componentsData)
+        sortValuesAndTransactions(componentsData);
         console.log("componentsData", componentsData);
         if (currentAddress != "") {
           if (searchAddress == currentAddress) {
@@ -135,7 +139,7 @@ function Scan() {
         console.log("componentsData", componentsData);
         setComponents([componentsData]);
         sortInputs([componentsData]);
-        sortValues([componentsData])
+        sortValuesAndTransactions([componentsData]);
         //Does the user has components?
         if (currentAddress != "") {
           var hasComponent = await ame.hasComponent(
@@ -193,8 +197,8 @@ function Scan() {
 
   const changeValue = async (e, _componentIndex, _methodIndex) => {
     var newValuesData = [...valuesData];
-    newValuesData[_componentIndex][_methodIndex]=e.target.value
-    setValuesData(newValuesData)
+    newValuesData[_componentIndex][_methodIndex] = e.target.value;
+    setValuesData(newValuesData);
   };
 
   const openTab = (_componentIndex, _methodIndex) => {
@@ -325,9 +329,6 @@ function Scan() {
       components[_componentIndex].methods[_methodIndex].dataType[1];
     var requestInputData = inputsData[_componentIndex][_methodIndex][0];
 
-    console.log("methodRequestParamsType", methodRequestParamsType);
-    console.log("requestInputData", requestInputData);
-
     var isValid = true;
     for (var item of requestInputData) {
       if (item == "") {
@@ -348,6 +349,7 @@ function Scan() {
           methodName,
           reqParamsEncode
         );
+
         var resDataDecode = ame.decodeResponseData(
           methodResponseDataType,
           resDataEncode
@@ -363,15 +365,14 @@ function Scan() {
         });
       } else {
         if (currentAddress != "") {
+          var value = valuesData[_componentIndex][_methodIndex];
 
-          var value=valuesData[_componentIndex][_methodIndex];
-          if(value!=""){
-            value=ame.web3.utils.toWei(value, 'ether');
-          }else{
-            value=0;
+          if (value != "") {
+            value = ame.web3.utils.toWei(value, "ether");
+          } else {
+            value = 0;
           }
 
- 
           if (methodType == 1) {
             const response = await toast.promise(
               async () => {
@@ -382,6 +383,22 @@ function Scan() {
                   currentAddress,
                   value
                 );
+
+                //Update Transaction detail
+
+                const transaction = await ame.web3.eth.getTransaction(
+                  txResult.transactionHash
+                );
+
+                transaction.value = ame.web3.utils.fromWei(
+                  transaction.value,
+                  "ether"
+                );
+
+                var newTransactionsData = [...transactionsData];
+                transactionsData[_componentIndex][_methodIndex] = transaction;
+
+                setTransactionsData(newTransactionsData);
 
                 if (
                   methodResponseDataType.length != 0 &&
@@ -432,6 +449,22 @@ function Scan() {
                   currentAddress,
                   value
                 );
+
+                //Update Transaction detail
+
+                const transaction = await ame.web3.eth.getTransaction(
+                  txResult.transactionHash
+                );
+
+                transaction.value = ame.web3.utils.fromWei(
+                  transaction.value,
+                  "ether"
+                );
+
+                var newTransactionsData = [...transactionsData];
+                transactionsData[_componentIndex][_methodIndex] = transaction;
+
+                setTransactionsData(newTransactionsData);
 
                 if (methodResponseDataType.length != 0) {
                   var resDataDecode = ame.decodeResponseData(
@@ -713,9 +746,7 @@ function Scan() {
                             <input
                               type="number"
                               key={methodIndex}
-                              value={
-                                valuesData[componentIndex][methodIndex]
-                              }
+                              value={valuesData[componentIndex][methodIndex]}
                               className="RequestParamsInput"
                               placeholder="Ether"
                               onChange={(e) =>
@@ -741,17 +772,91 @@ function Scan() {
                       <div className="ResponseDataTypes"></div>
                     </div>
                     <div className="Response">
-                      {inputsData[componentIndex][methodIndex][1].map(
-                        (resItem, resIndex) => (
-                          <div key={resIndex} className="ResponseValue">
-                            <div>{resItem.toString()}</div>
-                            <div className="ResponseDataTypeColor">
-                              :{methodItem.dataType[1][resIndex]}
+                      {inputsData[componentIndex][methodIndex][1].length ==
+                      0 ? (
+                        <div className="ResponseNoTip">
+                          This function does not have any response values.
+                        </div>
+                      ) : (
+                        inputsData[componentIndex][methodIndex][1].map(
+                          (resItem, resIndex) => (
+                            <div key={resIndex} className="ResponseValue">
+                              <div>{resItem.toString()}</div>
+                              <div className="ResponseDataTypeColor">
+                                :{methodItem.dataType[1][resIndex]}
+                              </div>
                             </div>
-                          </div>
+                          )
                         )
                       )}
                     </div>
+
+                    {methodItem.methodType == 1 ||
+                    methodItem.methodType == 2 ? (
+                      <div className="Transaction">
+                        <div className="AccordionTitle">Transaction Detail</div>
+
+                        {transactionsData[componentIndex][methodIndex] != "" ? (
+                          <div className="TransactionDetail">
+                            <div className="TransactionItem">
+                              <div className="TransactionItemLabel">Hash:</div>
+                              <div className="TransactionItemValue">
+                                <a
+                                  href={
+                                    Chains.get(networkValue).Network
+                                      .blockExplorerUrls[0] +
+                                    "/tx/" +
+                                    transactionsData[componentIndex][
+                                      methodIndex
+                                    ].hash
+                                  }
+                                  target="_blank"
+                                >
+                                  {" "}
+                                  {
+                                    transactionsData[componentIndex][
+                                      methodIndex
+                                    ].hash
+                                  }
+                                </a>
+                              </div>
+                            </div>
+                            <div className="TransactionItem">
+                              <div className="TransactionItemLabel">From:</div>
+                              <div className="TransactionItemValue">
+                                {
+                                  transactionsData[componentIndex][methodIndex]
+                                    .from
+                                }
+                              </div>
+                            </div>
+                            <div className="TransactionItem">
+                              <div className="TransactionItemLabel">To:</div>
+                              <div className="TransactionItemValue">
+                                {
+                                  transactionsData[componentIndex][methodIndex]
+                                    .to
+                                }
+                              </div>
+                            </div>
+                            <div className="TransactionItem">
+                              <div className="TransactionItemLabel">Value:</div>
+                              <div className="TransactionItemValue">
+                                {
+                                  transactionsData[componentIndex][methodIndex]
+                                    .value
+                                }
+                                &nbsp;ETH
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <div></div>
+                        )}
+                      </div>
+                    ) : (
+                      <div></div>
+                    )}
                   </div>
                 </div>
               ))}

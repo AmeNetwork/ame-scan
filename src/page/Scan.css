@@ -307,6 +307,27 @@
     background: #000;
     border-left: 1px solid #3D3D3D;
 }
+.ResponseNoTip{
+    font-size: 16px;
+    color: #848D99;
+    margin-top: 10px;
+}
+.TransactionItem{
+    display: flex;
+    margin-top: 10px;
+}
+
+.TransactionItem a{
+    color: #fff;
+}
+
+.TransactionItemLabel{
+    color: #04DD8F;
+    width: 70px;
+}
+.TransactionItemValue{
+    color: #fff;
+}
 
 @media only screen and (max-width: 576px) {
     .ScanTitle{
