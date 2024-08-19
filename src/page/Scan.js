@@ -356,6 +356,9 @@ function Scan() {
         );
 
         const resData = Object.values(resDataDecode);
+
+        console.log("resData",resData)
+
         resData.pop();
 
         setInputsData((inputsData) => {
