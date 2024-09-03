@@ -356,9 +356,6 @@ function Scan() {
         );
 
         const resData = Object.values(resDataDecode);
-
-        console.log("resData",resData)
-
         resData.pop();
 
         setInputsData((inputsData) => {
@@ -556,7 +553,7 @@ function Scan() {
           </li>
           <li>
             <a
-              href="https://github.com/HelloRickey/ame/tree/main/contracts/Components"
+              href="https://github.com/AmeNetwork/ame/tree/main/contracts/Components"
               target="_blank"
             >
               Components
@@ -607,7 +604,7 @@ function Scan() {
         <div className="WalletInfo">
           <Wallet updateWallet={updateWallet}></Wallet>
 
-          {isRegistered ? (
+          {/* {isRegistered ? (
             <div>Registed</div>
           ) : currentAddress != "" ? (
             networkValue != "Select a network" ? (
@@ -619,7 +616,9 @@ function Scan() {
             )
           ) : (
             <div></div>
-          )}
+          )} */}
+
+
         </div>
       </div>
 
@@ -628,7 +627,7 @@ function Scan() {
         <input
           type="text"
           className="AmeInput"
-          placeholder="Component address or wallet address"
+          placeholder="Please enter component address"
           value={searchAddress}
           onChange={(e) => {
             setSearchAddress(e.target.value);
@@ -656,7 +655,7 @@ function Scan() {
                   {componentItem.address}
                 </div>
 
-                {buttonType == 0 ? (
+                {/* {buttonType == 0 ? (
                   <div></div>
                 ) : buttonType == 1 ? (
                   <div
@@ -674,7 +673,7 @@ function Scan() {
                   >
                     Remove
                   </div>
-                )}
+                )} */}
               </div>
 
               {componentItem.methods.map((methodItem, methodIndex) => (
