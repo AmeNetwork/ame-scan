@@ -1,356 +1,207 @@
 import React, { useState, useEffect, memo } from "react";
 import "./Scan.css";
-import Chains from "../config/Chains";
-import { CopyToClipboard } from "react-copy-to-clipboard";
-import Tutorial from "../components/Tutorial/Tutorial";
 import chevronDown from "../assets/chevron-down.svg";
-import Wallet from "../components/wallet/Wallet";
-import { Select, ConfigProvider, Modal } from "antd";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 import ScanIcon from "../assets/scanIcon.png";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import Drawer from "react-modern-drawer";
-import "react-modern-drawer/dist/index.css";
-import AmeLib from "ame-sdk";
+import logo from "../assets/logo.svg";
+import {
+  encodeAbiParameters,
+  decodeAbiParameters,
+  formatEther,
+  parseEther,
+  decodeEventLog,
+} from "viem";
+
+import typesArray from "./typesArray";
+import {
+  readContract,
+  writeContract,
+  waitForTransactionReceipt,
+  getChainId,
+  getChains,
+  getAccount,
+} from "@wagmi/core";
+import config from "../config";
+import abi from "../abi.json";
+
 function Scan() {
-  const [options, setOptions] = useState([]);
-  const [ame, setAme] = useState();
   const [searchAddress, setSearchAddress] = useState("");
-  const [components, setComponents] = useState([]);
-  const [inputsData, setInputsData] = useState([]);
-  const [valuesData, setValuesData] = useState([]);
-  const [transactionsData, setTransactionsData] = useState([]);
-  const [currentAddress, setCurrentAddress] = useState("");
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [buttonType, setButtonType] = useState(0); //0:none,1:add,2:delete
-  const [networkValue, setNetworkValue] = useState("Select a network");
-  const [isOpen, setIsOpen] = useState(false);
-  useEffect(() => {
-    var options = [];
-    var optionsArray = Array.from(Chains);
-    for (var index in optionsArray) {
-      options.push({
-        value: optionsArray[index][1].Network.chainId,
-        label: optionsArray[index][1].Network.chainName,
-        chainId: optionsArray[index][1].Network.chainId,
-      });
+
+  const [component, setComponent] = useState("");
+  const [inputsData, setInputsData] = useState("");
+  const [valuesData, setValuesData] = useState("");
+  const [transactionsData, setTransactionsData] = useState("");
+  const [explorer, setExplorer] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const sortComponent = (componentData) => {
+    var methodsInput = [];
+    var methods = componentData.methods;
+    for (var i = 0; i < methods.length; i++) {
+      methodsInput.push([
+        new Array(methods[i].dataType[0].length).fill(""),
+        new Array(methods[i].dataType[1].length).fill(""),
+        false,
+      ]);
     }
-    setOptions(options);
-  }, []);
+    setInputsData(methodsInput);
 
-  useEffect(() => {
-    (async function fetchData() {
-      await initNetwork();
-    })();
-  }, [currentAddress]);
-
-  var changeNetwork = async (value) => {
-    var params = Chains.get(value).Network;
-    try {
-      await window.ethereum.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: value }],
-      });
-
-      window.location.reload();
-    } catch (switchError) {
-      if (switchError.code === 4902) {
-        try {
-          await window.ethereum.request({
-            method: "wallet_addEthereumChain",
-            params: [params],
-          });
-
-          window.location.reload();
-        } catch (addError) {
-          console.log(addError);
-        }
-      }
-    }
-  };
-
-  var initNetwork = async () => {
-    var chainId = await window.ethereum.request({ method: "eth_chainId" });
-    var currentChainId = Chains.has(chainId) ? chainId : "";
-    if (currentChainId != "") {
-      setNetworkValue(currentChainId);
-      var ame = new AmeLib(
-        window.ethereum,
-        Chains.get(currentChainId).ameWorld
-      );
-      setAme(ame);
-      if (currentAddress != "") {
-        var registerResult = await ame.isRegistered(currentAddress);
-        setIsRegistered(registerResult);
-      }
-    } else {
-    }
-  };
-
-  const sortInputs = (componentsData) => {
-    var inputs = [];
-    for (var i = 0; i < componentsData.length; i++) {
-      var methodsInput = [];
-      var methods = componentsData[i].methods;
-      for (var y = 0; y < methods.length; y++) {
-        methodsInput.push([
-          new Array(methods[y].dataType[0].length).fill(""),
-          new Array(methods[y].dataType[1].length).fill(""),
-          false,
-        ]);
-      }
-      inputs.push(methodsInput);
-    }
-    setInputsData(inputs);
-  };
-
-  const sortValuesAndTransactions = (componentsData) => {
-    var values = [];
-    var transactions = [];
-    for (var i = 0; i < componentsData.length; i++) {
-      values.push(new Array(componentsData[i].methods.length).fill(""));
-      transactions.push(new Array(componentsData[i].methods.length).fill(""));
-    }
+    var values = new Array(componentData.methods.length).fill("");
+    var transactions = new Array(componentData.methods.length).fill("");
     setValuesData(values);
     setTransactionsData(transactions);
   };
 
+  const queryComponent = async (searchAddress) => {
+    const options = await readContract(config, {
+      address: searchAddress,
+      abi: abi,
+      functionName: "options",
+      args: [],
+    });
+    var componentObj = {
+      address: searchAddress,
+      methods: [],
+      instructions: [],
+    };
+
+    for (var methodType of options) {
+      methodType = parseInt(methodType);
+
+      var methodNames = await readContract(config, {
+        address: searchAddress,
+        abi: abi,
+        functionName: "getMethods",
+        args: [methodType],
+      });
+
+      for (var methodName of methodNames) {
+        var instruction = await readContract(config, {
+          address: searchAddress,
+          abi: abi,
+          functionName: "getMethodInstruction",
+          args: [methodName],
+        });
+        componentObj.instructions.push(instruction);
+
+        var dataType = await readContract(config, {
+          address: searchAddress,
+          abi: abi,
+          functionName: "getMethodReqAndRes",
+          args: [methodName],
+        });
+
+        dataType[0] = dataType[0].map((num) => typesArray[Number(num)]);
+        dataType[1] = dataType[1].map((num) => typesArray[Number(num)]);
+
+        componentObj.methods.push({
+          methodName: methodName,
+          methodType: methodType,
+          dataType: dataType,
+        });
+      }
+    }
+    return componentObj;
+  };
+
   const queryContract = async () => {
     try {
-      var code = await ame.web3.eth.getCode(searchAddress);
-
-      if (code == "0x") {
-        var componentsData = await ame.queryAccount(searchAddress);
-        setComponents(componentsData);
-        sortInputs(componentsData);
-        sortValuesAndTransactions(componentsData);
-        console.log("componentsData", componentsData);
-        if (currentAddress != "") {
-          if (searchAddress == currentAddress) {
-            setButtonType(2);
-          } else {
-            setButtonType(0);
-          }
-        } else {
-          setButtonType(0);
-        }
-      } else {
-        var componentsData = await ame.queryComponent(searchAddress);
-        console.log("componentsData", componentsData);
-        setComponents([componentsData]);
-        sortInputs([componentsData]);
-        sortValuesAndTransactions([componentsData]);
-        //Does the user has components?
-        if (currentAddress != "") {
-          var hasComponent = await ame.hasComponent(
-            currentAddress,
-            searchAddress
-          );
-          if (hasComponent) {
-            setButtonType(2);
-          } else {
-            setButtonType(1);
-          }
-        } else {
-          setButtonType(0);
-        }
-      }
+      setLoading(true);
+      var componentData = await queryComponent(searchAddress);
+      setLoading(false);
+      setComponent(componentData);
+      sortComponent(componentData);
     } catch (error) {
-      console.log("address error");
-
-      toast.error("The component or wallet address is incorrect!", {
-        position: "top-center",
-        autoClose: 2500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
-      });
-      setComponents([]);
+      setLoading(false);
+      toast.warn(
+        "Can not query the component, please check network and address",
+        {
+          position: "top-center",
+          autoClose: 3500,
+          hideProgressBar: false,
+          closeOnClick: true,
+          pauseOnHover: true,
+          draggable: true,
+          progress: undefined,
+          theme: "dark",
+        }
+      );
+      setComponent("");
     }
   };
 
   const changeParamsInput = async (
     e,
-    _componentIndex,
+
     _methodIndex,
     _inputIndex
   ) => {
     var newInputsData = [...inputsData];
 
     if (
-      components[_componentIndex].methods[_methodIndex].dataType[0][
-        _inputIndex
-      ].includes("[]")
+      component.methods[_methodIndex].dataType[0][_inputIndex].includes("[]")
     ) {
-      newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
-        e.target.value.split(",");
+      newInputsData[_methodIndex][0][_inputIndex] = e.target.value.split(",");
     } else {
-      newInputsData[_componentIndex][_methodIndex][0][_inputIndex] =
-        e.target.value;
+      newInputsData[_methodIndex][0][_inputIndex] = e.target.value;
     }
 
     setInputsData(newInputsData);
   };
 
-  const changeValue = async (e, _componentIndex, _methodIndex) => {
+  const changeValue = async (e, _methodIndex) => {
     var newValuesData = [...valuesData];
-    newValuesData[_componentIndex][_methodIndex] = e.target.value;
+    newValuesData[_methodIndex] = e.target.value;
     setValuesData(newValuesData);
   };
 
-  const openTab = (_componentIndex, _methodIndex) => {
-    var isTabOpen = inputsData[_componentIndex][_methodIndex][2];
+  const openTab = (_methodIndex) => {
+    var isTabOpen = inputsData[_methodIndex][2];
 
     var newInputsData = [...inputsData];
-    newInputsData[_componentIndex][_methodIndex][2] = !isTabOpen;
+    newInputsData[_methodIndex][2] = !isTabOpen;
 
     setInputsData(newInputsData);
   };
 
-  const updateWallet = async (currentAddress) => {
-    setCurrentAddress(currentAddress);
-  };
+  const sendRequest = async (e, _methodIndex) => {
+    var componentAddress = component.address;
 
-  const checkRegister = async (register) => {
-    var registerResult = await ame.isRegistered(register);
-    setIsRegistered(registerResult);
-  };
+    var methodType = component.methods[_methodIndex].methodType;
+    var methodName = component.methods[_methodIndex].methodName;
+    var methodRequestParamsType = [];
+    var methodResponseDataType = [];
 
-  const registerNetwork = async () => {
-    const response = await toast.promise(
-      async () => {
-        await ame.registerAmeWorld(currentAddress);
-      },
-      {
-        pending: {
-          render: "Pending",
-          position: "top-center",
-          theme: "dark",
-          position: "top-center",
-        },
-        success: "Success",
-        error: "Fail",
-      }
-    );
-
-    await checkRegister(currentAddress);
-  };
-
-  const removeComponent = async (e, _componentAddress, _componentIndex) => {
-    var registerResult = await ame.isRegistered(currentAddress);
-    if (registerResult) {
-      const response = await toast.promise(
-        async () => {
-          await ame.removeComponents(currentAddress, [_componentAddress]);
-        },
-        {
-          pending: {
-            render: "Pending",
-            theme: "dark",
-            position: "top-center",
-          },
-          success: {
-            render: "Success",
-            autoClose: 2500,
-            theme: "dark",
-            position: "top-center",
-          },
-          error: {
-            render: "Fail",
-            autoClose: 2500,
-            theme: "dark",
-            position: "top-center",
-          },
-        }
-      );
-
-      var newComponent = [...components];
-      newComponent.splice(_componentIndex, 1);
-      setComponents(newComponent);
-    } else {
-      toast.warn("Please register first!", {
-        position: "top-center",
-        autoClose: 2500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
+    for (let item of component.methods[_methodIndex].dataType[0]) {
+      methodRequestParamsType.push({
+        type: item,
       });
     }
-  };
 
-  const addComponent = async (e, _componentAddress) => {
-    var registerResult = await ame.isRegistered(currentAddress);
-    if (registerResult) {
-      const response = await toast.promise(
-        async () => {
-          await ame.addComponents(currentAddress, [_componentAddress]);
-        },
-        {
-          pending: {
-            render: "Pending",
-            position: "top-center",
-            theme: "dark",
-            position: "top-center",
-          },
-          success: "Success",
-          error: "Fail",
-        }
-      );
-    } else {
-      toast.warn("Please register first!", {
-        position: "top-center",
-        autoClose: 2500,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
-        theme: "dark",
+    for (let item of component.methods[_methodIndex].dataType[1]) {
+      methodResponseDataType.push({
+        type: item,
       });
     }
-  };
+    var requestInputData = inputsData[_methodIndex][0];
 
-  const sendRequest = async (e, _componentIndex, _methodIndex) => {
-    var componentAddress = components[_componentIndex].address;
-
-    var methodType =
-      components[_componentIndex].methods[_methodIndex].methodType;
-    var methodName =
-      components[_componentIndex].methods[_methodIndex].methodName;
-    var methodRequestParamsType =
-      components[_componentIndex].methods[_methodIndex].dataType[0];
-    var methodResponseDataType =
-      components[_componentIndex].methods[_methodIndex].dataType[1];
-    var requestInputData = inputsData[_componentIndex][_methodIndex][0];
-
-    var isValid = true;
-    for (var item of requestInputData) {
-      if (item == "") {
-        isValid = false;
-      }
-    }
-
-    if (isValid) {
-      var reqParamsEncode = ame.encodeRequestParams(
+    try {
+      var reqParamsEncode = encodeAbiParameters(
         methodRequestParamsType,
         requestInputData
       );
 
-      console.log("reqParamsEncode", reqParamsEncode);
       if (methodType == 0) {
-        var resDataEncode = await ame.sendGetRequest(
-          componentAddress,
-          methodName,
-          reqParamsEncode
-        );
+        const resDataEncode = await readContract(config, {
+          abi: abi,
+          address: componentAddress,
+          functionName: "get",
+          args: [methodName, reqParamsEncode],
+        });
 
-        var resDataDecode = ame.decodeResponseData(
+        var resDataDecode = decodeAbiParameters(
           methodResponseDataType,
           resDataEncode
         );
@@ -360,149 +211,96 @@ function Scan() {
 
         setInputsData((inputsData) => {
           var newInputsData = [...inputsData];
-          newInputsData[_componentIndex][_methodIndex][1] = resData;
+          newInputsData[_methodIndex][1] = resData;
           return newInputsData;
         });
       } else {
+        const currentAddress = getAccount(config);
         if (currentAddress != "") {
-          var value = valuesData[_componentIndex][_methodIndex];
+          var value = valuesData[_methodIndex];
 
           if (value != "") {
-            value = ame.web3.utils.toWei(value, "ether");
+            value = parseEther(value);
           } else {
             value = 0;
           }
 
-          if (methodType == 1) {
-            const response = await toast.promise(
-              async () => {
-                var txResult = await ame.sendPostRequestWeb3js(
-                  componentAddress,
-                  methodName,
-                  reqParamsEncode,
-                  currentAddress,
-                  value
-                );
+          const response = await toast.promise(
+            async () => {
+              const txhash = await writeContract(config, {
+                address: componentAddress,
+                abi: abi,
+                functionName: methodType == 1 ? "post" : "put",
+                args: [methodName, reqParamsEncode],
+                value: value,
+              });
+              const receipt = await waitForTransactionReceipt(config, {
+                hash: txhash,
+              });
 
-                //Update Transaction detail
+              var newTransactionsData = [...transactionsData];
+              newTransactionsData[_methodIndex] = receipt;
+              setTransactionsData(newTransactionsData);
 
-                const transaction = await ame.web3.eth.getTransaction(
-                  txResult.transactionHash
-                );
+              const chainId = getChainId(config);
+              const chains = getChains(config);
 
-                transaction.value = ame.web3.utils.fromWei(
-                  transaction.value,
-                  "ether"
-                );
-
-                var newTransactionsData = [...transactionsData];
-                transactionsData[_componentIndex][_methodIndex] = transaction;
-
-                setTransactionsData(newTransactionsData);
-
-                if (
-                  methodResponseDataType.length != 0 &&
-                  txResult.events != undefined
-                ) {
-                  var resDataDecode = ame.decodeResponseData(
-                    methodResponseDataType,
-                    txResult.events.Response.returnValues[0]
-                  );
-
-                  const resData = Object.values(resDataDecode);
-                  resData.pop();
-
-                  setInputsData((inputsData) => {
-                    var newInputsData = [...inputsData];
-                    newInputsData[_componentIndex][_methodIndex][1] = resData;
-                    return newInputsData;
-                  });
+              var blockExplorers = {};
+              for (let item of chains) {
+                if (item.id == chainId) {
+                  blockExplorers = item.blockExplorers;
                 }
-              },
-              {
-                pending: {
-                  render: "Pending",
-                  theme: "dark",
-                  position: "top-center",
-                },
-                success: {
-                  render: "Success",
-                  autoClose: 2500,
-                  theme: "dark",
-                  position: "top-center",
-                },
-                error: {
-                  render: "Fail",
-                  autoClose: 2500,
-                  theme: "dark",
-                  position: "top-center",
-                },
               }
-            );
-          } else {
-            const response = await toast.promise(
-              async () => {
-                var txResult = await ame.sendPutRequestWeb3js(
-                  componentAddress,
-                  methodName,
-                  reqParamsEncode,
-                  currentAddress,
-                  value
+
+              var explorer = blockExplorers.default.url;
+              setExplorer(explorer);
+
+              //event
+
+              if (
+                methodResponseDataType.length != 0 &&
+                receipt.logs.length != 0
+              ) {
+                console.log(receipt);
+
+                const decodedEvent = decodeEventLog({
+                  abi: abi,
+                  data: receipt.logs[0].data,
+                  topics: receipt.logs[0].topics,
+                });
+
+                var resDataDecode = decodeAbiParameters(
+                  methodResponseDataType,
+                  decodedEvent.args._response
                 );
 
-                //Update Transaction detail
-
-                const transaction = await ame.web3.eth.getTransaction(
-                  txResult.transactionHash
-                );
-
-                transaction.value = ame.web3.utils.fromWei(
-                  transaction.value,
-                  "ether"
-                );
-
-                var newTransactionsData = [...transactionsData];
-                transactionsData[_componentIndex][_methodIndex] = transaction;
-
-                setTransactionsData(newTransactionsData);
-
-                if (methodResponseDataType.length != 0) {
-                  var resDataDecode = ame.decodeResponseData(
-                    methodResponseDataType,
-                    txResult.events.Response.returnValues[0]
-                  );
-
-                  const resData = Object.values(resDataDecode);
-                  resData.pop();
-
-                  setInputsData((inputsData) => {
-                    var newInputsData = [...inputsData];
-                    newInputsData[_componentIndex][_methodIndex][1] = resData;
-                    return newInputsData;
-                  });
-                }
-              },
-              {
-                pending: {
-                  render: "Pending",
-                  theme: "dark",
-                  position: "top-center",
-                },
-                success: {
-                  render: "Success",
-                  autoClose: 2500,
-                  theme: "dark",
-                  position: "top-center",
-                },
-                error: {
-                  render: "Fail",
-                  autoClose: 2500,
-                  theme: "dark",
-                  position: "top-center",
-                },
+                setInputsData((inputsData) => {
+                  var newInputsData = [...inputsData];
+                  newInputsData[_methodIndex][1] = resDataDecode;
+                  return newInputsData;
+                });
               }
-            );
-          }
+            },
+            {
+              pending: {
+                render: "Pending",
+                theme: "dark",
+                position: "top-center",
+              },
+              success: {
+                render: "Success",
+                autoClose: 2500,
+                theme: "dark",
+                position: "top-center",
+              },
+              error: {
+                render: "Fail",
+                autoClose: 2500,
+                theme: "dark",
+                position: "top-center",
+              },
+            }
+          );
         } else {
           toast.warn("Please connect wallet!", {
             position: "top-center",
@@ -516,8 +314,8 @@ function Scan() {
           });
         }
       }
-    } else {
-      toast.warn("Request parameter error!", {
+    } catch (error) {
+      toast.warn("request fail, please check request params", {
         position: "top-center",
         autoClose: 2500,
         hideProgressBar: false,
@@ -530,342 +328,217 @@ function Scan() {
     }
   };
 
-  const toggleDrawer = () => {
-    setIsOpen((prevState) => !prevState);
-  };
-
   return (
-    <div className="ScanContainer">
-      <ToastContainer />
-      {/* <Modal footer={""} open={isOpen} width={800} >
-      <div className="tutorial">
-          <Tutorial></Tutorial>
-        </div>
-      </Modal> */}
-
+    <div>
       <div className="ScanHeader">
-        <div className="ScanTitle">Ame Components Scan</div>
+        <div className="ScanTitle">
+          <img src={logo} width={120} />
+        </div>
         <ul className="ScanHeaderMenu">
           <li>
             <a href="https://ame.network" target="_blank">
-              About Ame Network
+              Ame Network
+            </a>
+          </li>
+
+          <li>
+            <a href="https://docs.ame.network/ame-scan" target="_blank">
+              Tutorial
             </a>
           </li>
           <li>
-            <a
-              href="https://github.com/AmeNetwork/ame/tree/main/contracts/Components"
-              target="_blank"
-            >
-              Components
+            <a href="https://github.com/AmeNetwork/ame-scan" target="_blank">
+              Github
             </a>
           </li>
-          {/* <li onClick={toggleDrawer}>How to Use It</li> */}
         </ul>
       </div>
+      <div className="ScanBigtitle">Ame Components Scan</div>
 
-      <div className="Network">
-        <div className="NetworkLabel">Network</div>
+      <div className="ScanContainer">
+        <ToastContainer />
 
-        <ConfigProvider
-          theme={{
-            components: {
-              Select: {
-                colorText: "#fff",
-                optionSelectedColor: "#fff",
+        <div className="Wallet">
+          <div className="WalletLabel">Wallet</div>
+          <ConnectButton />
+        </div>
 
-                optionSelectedBg: "#000",
-                optionActiveBg: "#363b42",
-              },
-            },
-            token: {
-              // colorPrimary: "#fff",
-              colorTextPlaceholder: "#fff",
-              borderRadius: 4,
-              colorBgElevated: "#0d1116",
-              colorBgContainer: "#0d1116",
-              colorBorder: "#363b42",
-              lineWidth: "2px",
-            },
-          }}
-        >
-          <Select
-            placeholder="Select a network"
-            value={networkValue}
-            // style={{ width: 200 }}
-            onChange={changeNetwork}
-            options={options}
-            className="Select"
+        <div className="AmeQuery">
+          <div className="NetworkLabel">Search Component</div>
+          <input
+            type="text"
+            className="AmeInput"
+            placeholder="Please enter component address"
+            value={searchAddress}
+            onChange={(e) => {
+              setSearchAddress(e.target.value);
+            }}
           />
-        </ConfigProvider>
-      </div>
-
-      <div className="Wallet">
-        <div className="WalletLabel">Wallet</div>
-        <div className="WalletInfo">
-          <Wallet updateWallet={updateWallet}></Wallet>
-
-          {/* {isRegistered ? (
-            <div>Registed</div>
-          ) : currentAddress != "" ? (
-            networkValue != "Select a network" ? (
-              <div className="RegisterButton" onClick={registerNetwork}>
-                Register
-              </div>
-            ) : (
-              <div></div>
-            )
-          ) : (
-            <div></div>
-          )} */}
-
-
+          <div className="SearchButton" onClick={queryContract}>
+            Search
+          </div>
         </div>
-      </div>
 
-      <div className="AmeQuery">
-        <div className="NetworkLabel">Search Component</div>
-        <input
-          type="text"
-          className="AmeInput"
-          placeholder="Please enter component address"
-          value={searchAddress}
-          onChange={(e) => {
-            setSearchAddress(e.target.value);
-          }}
-        />
-        <div className="SearchButton" onClick={queryContract}>
-          Search
-        </div>
-      </div>
-      <div className="ComponentsTitle">Components</div>
-
-      {components.length == 0 ? (
-        <div className="NoComponentData">
+        <div className="NoComponentData" hidden={!loading}>
           <div>
             <img src={ScanIcon} width={60} />
           </div>
-          <div>No Data</div>
+          <div>loading</div>
         </div>
-      ) : (
-        <ul className="Components">
-          {components.map((componentItem, componentIndex) => (
-            <li key={componentIndex} className="TabContainer">
-              <div className="ComponentAddress">
-                <div className="ComponentAddressTitle">
-                  {componentItem.address}
+        {
+          (component == "" ? (
+            <div></div>
+          ) : (
+            <div>
+              <div className="ComponentsTitle">Component</div>
+              <div className="TabContainer">
+                <div className="ComponentAddress">
+                  <div className="ComponentAddressTitle">
+                    {component.address}
+                  </div>
                 </div>
 
-                {/* {buttonType == 0 ? (
-                  <div></div>
-                ) : buttonType == 1 ? (
-                  <div
-                    className="ComponentAddressButton"
-                    onClick={(e) => addComponent(e, componentItem.address)}
-                  >
-                    Add
-                  </div>
-                ) : (
-                  <div
-                    className="ComponentAddressButton"
-                    onClick={(e) =>
-                      removeComponent(e, componentItem.address, componentIndex)
-                    }
-                  >
-                    Remove
-                  </div>
-                )} */}
-              </div>
-
-              {componentItem.methods.map((methodItem, methodIndex) => (
-                <div key={methodIndex} className="TabItem">
-                  <div
-                    className="TabHeader"
-                    onClick={(e) => {
-                      openTab(componentIndex, methodIndex);
-                    }}
-                  >
-                    <div className="TabHeaderComponentMethod">
-                      <div className="ComponentMethodType">
-                        {methodItem.methodType == 0 ? (
-                          <span>GET</span>
-                        ) : methodItem.methodType == 1 ? (
-                          <span>POST</span>
-                        ) : (
-                          <span>PUT</span>
-                        )}
-                      </div>
-                      <div className="ComponentMethodName">
-                        {methodItem.methodName}
-                      </div>
-                    </div>
+                {component.methods.map((methodItem, methodIndex) => (
+                  <div key={methodIndex} className="TabItem">
                     <div
-                      className={
-                        inputsData[componentIndex][methodIndex][2]
-                          ? "rotate"
-                          : ""
-                      }
+                      className="TabHeader"
+                      onClick={(e) => {
+                        openTab(methodIndex);
+                      }}
                     >
-                      <img src={chevronDown} />
-                    </div>
-                  </div>
-
-                  <div
-                    className="TabBody"
-                    hidden={inputsData[componentIndex][methodIndex][2] == false}
-                  >
-                    <div className="RequestParams">
-                      <div className="RequestParamsLeft">
-                        <div className="AccordionTitle">Request Params</div>
-                        <div className="RequestParamsForm">
-                          {methodItem.dataType[0].map(
-                            (requestItem, inputIndex) => (
-                              <input
-                                key={inputIndex}
-                                value={
-                                  inputsData[componentIndex][methodIndex][0][
-                                    inputIndex
-                                  ]
-                                }
-                                className="RequestParamsInput"
-                                placeholder={requestItem}
-                                onChange={(e) =>
-                                  changeParamsInput(
-                                    e,
-                                    componentIndex,
-                                    methodIndex,
-                                    inputIndex
-                                  )
-                                }
-                              />
-                            )
+                      <div className="TabHeaderComponentMethod">
+                        <div className="ComponentMethodType">
+                          {methodItem.methodType == 0 ? (
+                            <span>GET</span>
+                          ) : methodItem.methodType == 1 ? (
+                            <span>POST</span>
+                          ) : (
+                            <span>PUT</span>
                           )}
                         </div>
-
-                        {methodItem.methodType == 1 ||
-                        methodItem.methodType == 2 ? (
-                          <div>
-                            <div className="AccordionTitle">Value</div>
-                            <input
-                              type="number"
-                              key={methodIndex}
-                              value={valuesData[componentIndex][methodIndex]}
-                              className="RequestParamsInput"
-                              placeholder="Ether"
-                              onChange={(e) =>
-                                changeValue(e, componentIndex, methodIndex)
-                              }
-                            />
-                          </div>
-                        ) : (
-                          <div></div>
-                        )}
+                        <div className="ComponentMethodName">
+                          {methodItem.methodName}
+                        </div>
                       </div>
                       <div
-                        className="RequestParamsButton"
-                        onClick={(e) =>
-                          sendRequest(e, componentIndex, methodIndex)
-                        }
+                        className={inputsData[methodIndex][2] ? "rotate" : ""}
                       >
-                        Send
+                        <img src={chevronDown} />
                       </div>
                     </div>
-                    <div className="AccordionTitle">
-                      <div>Response</div>
-                      <div className="ResponseDataTypes"></div>
-                    </div>
-                    <div className="Response">
-                      {inputsData[componentIndex][methodIndex][1].length ==
-                      0 ? (
-                        <div className="ResponseNoTip">
-                          This function does not have any response values.
+
+                    <div
+                      className="TabBody"
+                      hidden={inputsData[methodIndex][2] == false}
+                    >
+                      <div className="RequestParams">
+                        <div className="RequestParamsLeft">
+                          <div className="InstructionTitle">Instruction</div>
+                          <div className="InstructionValue">
+                            {component.instructions[methodIndex]}
+                          </div>
+
+                          <div className="AccordionTitle">Request Params</div>
+                          <div className="RequestParamsForm">
+                            {methodItem.dataType[0].map(
+                              (requestItem, inputIndex) => (
+                                <input
+                                  key={inputIndex}
+                                  value={inputsData[methodIndex][0][inputIndex]}
+                                  className="RequestParamsInput"
+                                  placeholder={requestItem}
+                                  onChange={(e) =>
+                                    changeParamsInput(
+                                      e,
+                                      methodIndex,
+                                      inputIndex
+                                    )
+                                  }
+                                />
+                              )
+                            )}
+                          </div>
+
+                          {methodItem.methodType == 1 ||
+                          methodItem.methodType == 2 ? (
+                            <div>
+                              <div className="AccordionTitle">Value</div>
+                              <input
+                                type="number"
+                                key={methodIndex}
+                                value={valuesData[methodIndex]}
+                                className="RequestParamsInput"
+                                placeholder="Ether"
+                                onChange={(e) => changeValue(e, methodIndex)}
+                              />
+                            </div>
+                          ) : (
+                            <div></div>
+                          )}
                         </div>
-                      ) : (
-                        inputsData[componentIndex][methodIndex][1].map(
-                          (resItem, resIndex) => (
-                            <div key={resIndex} className="ResponseValue">
-                              <div>{resItem.toString()}</div>
-                              <div className="ResponseDataTypeColor">
-                                :{methodItem.dataType[1][resIndex]}
-                              </div>
-                            </div>
-                          )
-                        )
-                      )}
-                    </div>
-
-                    {methodItem.methodType == 1 ||
-                    methodItem.methodType == 2 ? (
-                      <div className="Transaction">
-                        <div className="AccordionTitle">Transaction Detail</div>
-
-                        {transactionsData[componentIndex][methodIndex] != "" ? (
-                          <div className="TransactionDetail">
-                            <div className="TransactionItem">
-                              <div className="TransactionItemLabel">Hash:</div>
-                              <div className="TransactionItemValue">
-                                <a
-                                  href={
-                                    Chains.get(networkValue).Network
-                                      .blockExplorerUrls[0] +
-                                    "/tx/" +
-                                    transactionsData[componentIndex][
-                                      methodIndex
-                                    ].hash
-                                  }
-                                  target="_blank"
-                                >
-                                  {" "}
-                                  {
-                                    transactionsData[componentIndex][
-                                      methodIndex
-                                    ].hash
-                                  }
-                                </a>
-                              </div>
-                            </div>
-                            <div className="TransactionItem">
-                              <div className="TransactionItemLabel">From:</div>
-                              <div className="TransactionItemValue">
-                                {
-                                  transactionsData[componentIndex][methodIndex]
-                                    .from
-                                }
-                              </div>
-                            </div>
-                            <div className="TransactionItem">
-                              <div className="TransactionItemLabel">To:</div>
-                              <div className="TransactionItemValue">
-                                {
-                                  transactionsData[componentIndex][methodIndex]
-                                    .to
-                                }
-                              </div>
-                            </div>
-                            <div className="TransactionItem">
-                              <div className="TransactionItemLabel">Value:</div>
-                              <div className="TransactionItemValue">
-                                {
-                                  transactionsData[componentIndex][methodIndex]
-                                    .value
-                                }
-                                &nbsp;ETH
-                              </div>
-                            </div>
+                        <div
+                          className="RequestParamsButton"
+                          onClick={(e) => sendRequest(e, methodIndex)}
+                        >
+                          Send
+                        </div>
+                      </div>
+                      <div className="AccordionTitle">
+                        <div>Response</div>
+                        <div className="ResponseDataTypes"></div>
+                      </div>
+                      <div className="Response">
+                        {inputsData[methodIndex][1].length == 0 ? (
+                          <div className="ResponseNoTip">
+                            This method does not have any response values.
                           </div>
                         ) : (
-                          <div></div>
+                          inputsData[methodIndex][1].map(
+                            (resItem, resIndex) => (
+                              <div key={resIndex} className="ResponseValue">
+                                <div className="ResponseValueData">
+                                  {resItem.toString()}
+                                </div>
+                                <div className="ResponseDataTypeColor">
+                                  :{methodItem.dataType[1][resIndex]}
+                                </div>
+                              </div>
+                            )
+                          )
                         )}
                       </div>
-                    ) : (
-                      <div></div>
-                    )}
+
+                      {(methodItem.methodType != 0) &
+                      (transactionsData[methodIndex] != "") ? (
+                        <div className="Transaction">
+                          <div className="AccordionTitle">Transaction Hash</div>
+
+                          <div className="TransactionDetail">
+                            <div className="TransactionItem">
+                              <a
+                                href={
+                                  explorer +
+                                  "/tx/" +
+                                  transactionsData[methodIndex].transactionHash
+                                }
+                                target="_blank"
+                              >
+                                {transactionsData[methodIndex].transactionHash}
+                              </a>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </li>
-          ))}
-        </ul>
-      )}
+                ))}
+              </div>
+            </div>
+          ))
+        }
+      </div>
     </div>
   );
 }

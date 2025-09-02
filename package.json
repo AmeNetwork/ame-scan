@@ -1,22 +1,23 @@
 {
   "name": "ame-scan",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "dependencies": {
+    "@rainbow-me/rainbowkit": "^2.2.8",
+    "@tanstack/react-query": "^5.85.6",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
-    "ame-sdk": "0.0.4",
     "antd": "^5.16.0",
+    "avvvatars-react": "^0.4.2",
     "react": "^18.2.0",
-    "react-copy-to-clipboard": "^5.1.0",
+    "react-app-rewired": "^2.2.1",
     "react-dom": "^18.2.0",
-    "react-modern-drawer": "^1.2.2",
     "react-scripts": "5.0.1",
-    "react-select": "^5.7.4",
     "react-toastify": "^10.0.5",
+    "viem": "^2.37.0",
+    "wagmi": "^2.16.9",
     "web-vitals": "^2.1.4",
-    "web3": "^4.7.0",
     "yarn": "^1.22.22"
   },
   "scripts": {
@@ -45,7 +46,5 @@
       "last 1 safari version"
     ]
   },
-  "devDependencies": {
-    "@babel/plugin-proposal-private-property-in-object": "^7.21.11"
-  }
+  "devDependencies": {}
 }

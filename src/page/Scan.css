@@ -2,16 +2,23 @@
     width: 96%;
     max-width: 800px;
     margin: 0px auto;
+    margin-top: 200px;
+ 
 }
 .ScanHeader{
-    margin-top: 100px;
-    margin-bottom: 100px;
+
+    max-width: 1000px;
+    width: 90%;
+    margin: 0px auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 .ScanTitle {
-    width: 100%;
+
     font-weight: bold;
     text-align: center;
-    font-size: 32px;
+    font-size: 20px;
     color: #fff;
 }
 .ScanHeaderMenu{
@@ -24,16 +31,26 @@
 }
 .ScanHeaderMenu li{
     cursor: pointer;
-    text-decoration: underline;
+
     padding: 0px 10px;
 }
-.ScanHeaderMenu li:hover,.ScanHeaderMenu a:hover{
-    color: #04DD8F;
+.ScanHeaderMenu a:hover{
+    color: #1E86FF;
+    text-decoration: underline;
 }
 .ScanHeaderMenu a{
     text-decoration: none;
     color: #fff;
 }
+.ScanBigtitle{
+    width: 90%;
+    text-align: center;
+    font-size: 32px;
+    color: #fff;
+    margin: 0px auto;
+    margin-top: 100px;
+}
+
 .NetworkLabel{
     font-weight: bold;
     font-size: 18px;
@@ -222,8 +239,8 @@
     margin-top: 20px;
 }
 .ComponentMethodType{
-    color: #fff;
-    background: #363b42;
+  
+    background: #eee;
     width: 80px;
     height: 32px;
     line-height: 32px;
@@ -271,6 +288,10 @@
 .ResponseValue{
     overflow-wrap: break-word;
     width: 100%;
+    display: flex;
+}
+.ResponseValueData{
+    color: #1E86FF;
 }
 .ResponseDataTypeColor{
     color: #04DD8F;
@@ -292,7 +313,7 @@
 .NoComponentData{
     width: 100%;
     text-align: center;
-    margin-top: 30px;
+    margin-top: 80px;
     font-size: 16px;
     color: #fff;
 }
@@ -318,15 +339,21 @@
 }
 
 .TransactionItem a{
-    color: #fff;
+   color: #1E86FF;
 }
 
 .TransactionItemLabel{
     color: #04DD8F;
     width: 70px;
 }
-.TransactionItemValue{
+
+
+.InstructionTitle{
     color: #fff;
+    margin-top: 20px;
+}
+.InstructionValue{
+    color: #04DD8F;
 }
 
 @media only screen and (max-width: 576px) {
@@ -354,14 +381,16 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    .RequestParamsLeft{
-        /* width: 100%; */
-    }
+
     .RequestParams{
         flex-direction: column;
     }   
     .RequestParamsInput{
         width: calc(100% - 8   px);
+    }
+    .ScanHeader{
+        padding-top: 20px;
+        flex-direction: column;
     }
     .ScanHeaderMenu{
         align-items: center;
