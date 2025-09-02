@@ -206,12 +206,12 @@ function Scan() {
           resDataEncode
         );
 
-        const resData = Object.values(resDataDecode);
-        resData.pop();
+        // const resData = Object.values(resDataDecode);
+        // resData.pop();
 
         setInputsData((inputsData) => {
           var newInputsData = [...inputsData];
-          newInputsData[_methodIndex][1] = resData;
+          newInputsData[_methodIndex][1] = resDataDecode;
           return newInputsData;
         });
       } else {
@@ -261,7 +261,7 @@ function Scan() {
                 methodResponseDataType.length != 0 &&
                 receipt.logs.length != 0
               ) {
-                console.log(receipt);
+          
 
                 const decodedEvent = decodeEventLog({
                   abi: abi,
